@@ -1,3 +1,137 @@
+commit cb287aed863a178b43a37df35484a75a22256071
+Author: bunk.moreland <bunk.moreland@dangelo.barksdale.local>
+Date:   Tue Sep 22 20:56:41 2026 +0200
+
+    aktivated UFW ports 22 & 3389
+---
+ ufw/ufw.conf    |  2 +-
+ ufw/user.rules  | 30 ++++++++++++++++++++++++++++++
+ ufw/user6.rules | 35 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 66 insertions(+), 1 deletion(-)
+
+diff --git a/ufw/ufw.conf b/ufw/ufw.conf
+index 8336b91..28fe534 100644
+--- a/ufw/ufw.conf
++++ b/ufw/ufw.conf
+@@ -3,7 +3,7 @@
+ 
+ # Set to yes to start on boot. If setting this remotely, be sure to add a rule
+ # to allow your remote connection before starting ufw. Eg: 'ufw allow 22/tcp'
+-ENABLED=no
++ENABLED=yes
+ 
+ # Please use the 'ufw' command to set the loglevel. Eg: 'ufw logging medium'.
+ # See 'man ufw' for details.
+diff --git a/ufw/user.rules b/ufw/user.rules
+index 7503fbb..1a7b608 100644
+--- a/ufw/user.rules
++++ b/ufw/user.rules
+@@ -2,10 +2,40 @@
+ :ufw-user-input - [0:0]
+ :ufw-user-output - [0:0]
+ :ufw-user-forward - [0:0]
++:ufw-before-logging-input - [0:0]
++:ufw-before-logging-output - [0:0]
++:ufw-before-logging-forward - [0:0]
++:ufw-user-logging-input - [0:0]
++:ufw-user-logging-output - [0:0]
++:ufw-user-logging-forward - [0:0]
++:ufw-after-logging-input - [0:0]
++:ufw-after-logging-output - [0:0]
++:ufw-after-logging-forward - [0:0]
++:ufw-logging-deny - [0:0]
++:ufw-logging-allow - [0:0]
+ :ufw-user-limit - [0:0]
+ :ufw-user-limit-accept - [0:0]
+ ### RULES ###
++
++### tuple ### allow tcp 22 0.0.0.0/0 any 0.0.0.0/0 in
++-A ufw-user-input -p tcp --dport 22 -j ACCEPT
++
++### tuple ### allow tcp 3389 0.0.0.0/0 any 0.0.0.0/0 in
++-A ufw-user-input -p tcp --dport 3389 -j ACCEPT
++
++### END RULES ###
++
++### LOGGING ###
++-A ufw-after-logging-input -j LOG --log-prefix "[UFW BLOCK] " -m limit --limit 3/min --limit-burst 10
++-A ufw-after-logging-forward -j LOG --log-prefix "[UFW BLOCK] " -m limit --limit 3/min --limit-burst 10
++-I ufw-logging-deny -m conntrack --ctstate INVALID -j RETURN -m limit --limit 3/min --limit-burst 10
++-A ufw-logging-deny -j LOG --log-prefix "[UFW BLOCK] " -m limit --limit 3/min --limit-burst 10
++-A ufw-logging-allow -j LOG --log-prefix "[UFW ALLOW] " -m limit --limit 3/min --limit-burst 10
++### END LOGGING ###
++
++### RATE LIMITING ###
+ -A ufw-user-limit -m limit --limit 3/minute -j LOG --log-prefix "[UFW LIMIT BLOCK] "
+ -A ufw-user-limit -j REJECT
+ -A ufw-user-limit-accept -j ACCEPT
++### END RATE LIMITING ###
+ COMMIT
+diff --git a/ufw/user6.rules b/ufw/user6.rules
+index a50108b..a90b8f1 100644
+--- a/ufw/user6.rules
++++ b/ufw/user6.rules
+@@ -2,5 +2,40 @@
+ :ufw6-user-input - [0:0]
+ :ufw6-user-output - [0:0]
+ :ufw6-user-forward - [0:0]
++:ufw6-before-logging-input - [0:0]
++:ufw6-before-logging-output - [0:0]
++:ufw6-before-logging-forward - [0:0]
++:ufw6-user-logging-input - [0:0]
++:ufw6-user-logging-output - [0:0]
++:ufw6-user-logging-forward - [0:0]
++:ufw6-after-logging-input - [0:0]
++:ufw6-after-logging-output - [0:0]
++:ufw6-after-logging-forward - [0:0]
++:ufw6-logging-deny - [0:0]
++:ufw6-logging-allow - [0:0]
++:ufw6-user-limit - [0:0]
++:ufw6-user-limit-accept - [0:0]
+ ### RULES ###
++
++### tuple ### allow tcp 22 ::/0 any ::/0 in
++-A ufw6-user-input -p tcp --dport 22 -j ACCEPT
++
++### tuple ### allow tcp 3389 ::/0 any ::/0 in
++-A ufw6-user-input -p tcp --dport 3389 -j ACCEPT
++
++### END RULES ###
++
++### LOGGING ###
++-A ufw6-after-logging-input -j LOG --log-prefix "[UFW BLOCK] " -m limit --limit 3/min --limit-burst 10
++-A ufw6-after-logging-forward -j LOG --log-prefix "[UFW BLOCK] " -m limit --limit 3/min --limit-burst 10
++-I ufw6-logging-deny -m conntrack --ctstate INVALID -j RETURN -m limit --limit 3/min --limit-burst 10
++-A ufw6-logging-deny -j LOG --log-prefix "[UFW BLOCK] " -m limit --limit 3/min --limit-burst 10
++-A ufw6-logging-allow -j LOG --log-prefix "[UFW ALLOW] " -m limit --limit 3/min --limit-burst 10
++### END LOGGING ###
++
++### RATE LIMITING ###
++-A ufw6-user-limit -m limit --limit 3/minute -j LOG --log-prefix "[UFW LIMIT BLOCK] "
++-A ufw6-user-limit -j REJECT
++-A ufw6-user-limit-accept -j ACCEPT
++### END RATE LIMITING ###
+ COMMIT
+
+commit bad7b93d1354a2b64252ad8ce9e8a888072e49df
+Author: bunk.moreland <bunk.moreland@dangelo.barksdale.local>
+Date:   Tue Sep 22 21:42:13 2026 +0200
+
+    Hardening Baseline komplett: Aktiverat sudo I/O-loggning
+---
+ sudoers | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/sudoers b/sudoers
+index b5da8e9..50d9781 100644
+--- a/sudoers
++++ b/sudoers
+@@ -52,3 +52,4 @@ root	ALL=(ALL:ALL) ALL
+ # See sudoers(5) for more information on "@include" directives:
+ 
+ @includedir /etc/sudoers.d
++Defaults log_output, log_input
+
 commit b03f59e79b209a39ebbf83e682d37ed8896a3158
 Author: bunk.moreland <bunk.moreland@dangelo.barksdale.local>
 Date:   Tue Sep 22 21:51:19 2026 +0200
